@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Service Planner</title>
+  <script src="config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #1a2744; --navy-mid: #253361; --gold: #c9973a; --gold-light: #f0d9a8;
+      --linen: #f7f4ee; --linen-dark: #ede9df; --text: #1a1a2e; --text-muted: #6b6b80;
+      --white: #ffffff; --red: #c0392b; --green: #27664a; --radius: 8px;
+      --shadow: 0 2px 12px rgba(26,39,68,.10); --shadow-lg: 0 8px 32px rgba(26,39,68,.16);
+    }
+    body { background: var(--linen); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+    h1,h2,h3 { font-family: 'Cormorant Garamond', serif; }
+    .app { max-width: 1200px; margin: 0 auto; padding: 24px 16px 80px; }
+
+    /* Header */
+    .header { display:flex; align-items:center; gap:14px; margin-bottom:28px; padding-bottom:18px; border-bottom:1px solid var(--linen-dark); }
+    .header h1 { font-size:2rem; color:var(--navy); line-height:1; }
+    .header p { font-size:.85rem; color:var(--text-muted); margin-top:2px; }
+
+    /* Setup card */
+    .setup-card { background:var(--white); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow); max-width:540px; margin:40px auto; }
+    .setup-card h2 { font-size:1.5rem; color:var(--navy); margin-bottom:6px; }
+    .setup-card p { font-size:.875rem; color:var(--text-muted); margin-bottom:20px; line-height:1.6; }
+    .setup-card a { color:var(--gold); }
+    .field { margin-bottom:14px; }
+    .field label { display:block; font-size:.78rem; font-weight:600; color:var(--navy); margin-bottom:5px; text-transform:uppercase; letter-spacing:.05em; }
+    .field input { width:100%; padding:10px 12px; border:1px solid var(--linen-dark); border-radius:6px; font-size:.9rem; background:var(--linen); color:var(--text); outline:none; transition:border-color .15s; }
+    .field input:focus { border-color:var(--gold); background:var(--white); }
+    .field small { font-size:.75rem; color:var(--text-muted); margin-top:4px; display:block; }
+
+    /* Buttons */
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:6px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .15s; border:none; }
+    .btn-primary { background:var(--navy); color:var(--white); }
+    .btn-primary:hover { background:var(--navy-mid); }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-gold { background:var(--gold); color:var(--white); }
+    .btn-gold:hover { background:#b8852e; }
+    .btn-gold:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-ghost { background:transparent; color:var(--navy); border:1px solid var(--linen-dark); }
+    .btn-ghost:hover { background:var(--linen-dark); }
+    .btn-sm { padding:6px 12px; font-size:.8rem; }
+    .error-msg { background:#fdf0ef; border:1px solid #e8b4b0; border-radius:6px; padding:10px 12px; font-size:.85rem; color:var(--red); margin-top:12px; }
+
+    /* Spinner */
+    .spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+    .spinner-dark { border-color:var(--linen-dark); border-top-color:var(--gold); }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .big-spinner { width:40px; height:40px; border-width:3px; margin:0 auto 20px; }
+    .loading-screen { text-align:center; padding:60px 16px; }
+    .loading-screen h2 { font-size:1.5rem; color:var(--navy); margin-bottom:8px; }
+    .loading-screen p { font-size:.875rem; color:var(--text-muted); }
+
+    /* Layout */
+    .top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .layout { display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start; }
+    @media(max-width:800px) { .layout { grid-template-columns:1fr; } }
+
+    /* Panel */
+    .panel { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    .panel-header { padding:16px 20px; border-bottom:1px solid var(--linen-dark); display:flex; align-items:center; justify-content:space-between; }
+    .panel-header h2 { font-size:1.2rem; color:var(--navy); }
+    .panel-body { padding:16px 20px; }
+
+    /* AI box */
+    .ai-box { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:20px; }
+    .ai-box-head { background:var(--navy); padding:14px 18px; }
+    .ai-box-head h2 { font-size:1.05rem; color:var(--white); }
+    .ai-box-body { padding:16px 18px; }
+    .ai-row { display:flex; gap:8px; margin-bottom:12px; }
+    .ai-row input { flex:1; padding:9px 12px; border:1px solid var(--linen-dark); border-radius:6px; font-size:.875rem; background:var(--linen); outline:none; }
+    .ai-row input:focus { border-color:var(--gold); background:var(--white); }
+    .ai-result { font-size:.85rem; line-height:1.7; color:var(--text); white-space:pre-wrap; }
+    .ai-loading { display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--text-muted); }
+
+    /* Search/filter */
+    .search-row { display:flex; gap:8px; margin-bottom:10px; }
+    .search-row input { flex:1; padding:8px 12px; border:1px solid var(--linen-dark); border-radius:6px; font-size:.875rem; background:var(--linen); outline:none; }
+    .search-row input:focus { border-color:var(--gold); background:var(--white); }
+    .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+    .chip { padding:4px 10px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; border:1px solid transparent; background:var(--linen-dark); color:var(--navy); transition:all .12s; }
+    .chip.on { background:var(--navy); color:var(--white); }
+    .chip:hover:not(.on) { border-color:var(--navy); }
+
+    /* Song list */
+    .song-list { display:flex; flex-direction:column; gap:5px; max-height:500px; overflow-y:auto; }
+    .song-item { display:flex; align-items:center; gap:12px; padding:9px 11px; border-radius:6px; border:1px solid transparent; cursor:pointer; transition:all .12s; }
+    .song-item:hover { background:var(--linen); border-color:var(--linen-dark); }
+    .song-item.in-set { background:#edf5f0; border-color:#b8deca; }
+    .song-info { flex:1; min-width:0; }
+    .song-title { font-weight:600; font-size:.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .song-meta { font-size:.72rem; color:var(--text-muted); margin-top:1px; }
+    .song-themes { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+    .theme-tag { font-size:.68rem; padding:2px 6px; background:var(--gold-light); color:#7a5c1e; border-radius:4px; }
+    .add-btn { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--navy); color:var(--white); border:none; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .12s; }
+    .song-item:hover .add-btn, .song-item.in-set .add-btn { opacity:1; }
+    .song-item.in-set .add-btn { background:var(--green); }
+    .empty { text-align:center; padding:28px; color:var(--text-muted); font-size:.875rem; }
+
+    /* Set builder */
+    .set-head { padding:16px 20px; border-bottom:1px solid var(--linen-dark); }
+    .set-head h2 { font-size:1.2rem; color:var(--navy); }
+    .set-title-input { width:100%; margin-top:8px; padding:7px 10px; border:1px solid var(--linen-dark); border-radius:6px; font-family:'Cormorant Garamond',serif; font-size:1rem; background:var(--linen); outline:none; }
+    .set-title-input:focus { border-color:var(--gold); background:var(--white); }
+    .set-body { padding:14px 20px; }
+    .set-slot { display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--linen); border-radius:6px; margin-bottom:6px; }
+    .slot-num { font-size:.7rem; font-weight:700; color:var(--text-muted); width:18px; text-align:center; flex-shrink:0; }
+    .slot-info { flex:1; min-width:0; }
+    .slot-title { font-size:.85rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .slot-author { font-size:.72rem; color:var(--text-muted); }
+    .slot-rm { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:.9rem; padding:2px 4px; border-radius:4px; }
+    .slot-rm:hover { color:var(--red); background:#fdf0ef; }
+    .set-actions { display:flex; gap:8px; margin-top:14px; }
+    .toast { font-size:.78rem; color:var(--green); margin-top:8px; text-align:center; }
+    .set-empty-msg { text-align:center; padding:28px 12px; font-size:.85rem; color:var(--text-muted); line-height:1.6; }
+
+    /* Steps */
+    .steps { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+    .step { display:flex; gap:12px; align-items:flex-start; }
+    .step-num { background:var(--navy); color:var(--white); width:24px; height:24px; border-radius:50%; font-size:.75rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    .step p { font-size:.85rem; color:var(--text); line-height:1.5; }
+    .step code { background:var(--linen-dark); padding:1px 5px; border-radius:3px; font-size:.8rem; }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading-screen">
+    <div class="spinner spinner-dark big-spinner"></div>
+    <p>Loading…</p>
+  </div>
+</div>
+
+<script>
+// ── Config — fill these in after deploying Supabase ──────────
+// These are set via the config.js file (see setup instructions)
+const CONFIG = window.PLANNER_CONFIG || { supabaseUrl: "", supabaseAnonKey: "" };
+
+// ── State ────────────────────────────────────────────────────
+let songs = [];
+let serviceSet = [];
+let activeTopic = null;
+let searchVal = "";
+let setTitle = "Sunday Morning Service";
+let aiResult = "";
+let aiLoading = false;
+let copied = false;
+let appState = "setup"; // setup | loading | ready
+
+// ── Helpers ──────────────────────────────────────────────────
+function extractThemes(song) {
+  if (!song.attributes?.themes) return [];
+  return song.attributes.themes.split(",").map(t => t.trim()).filter(Boolean);
+}
+
+function allTopics() {
+  const counts = {};
+  songs.forEach(s => extractThemes(s).forEach(t => { counts[t] = (counts[t]||0)+1; }));
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,24).map(([t])=>t);
+}
+
+function filteredSongs() {
+  const q = searchVal.toLowerCase();
+  return songs.filter(s => {
+    const title = (s.attributes?.title||"").toLowerCase();
+    const author = (s.attributes?.author||"").toLowerCase();
+    const themes = extractThemes(s).map(t=>t.toLowerCase());
+    const matchSearch = !q || title.includes(q) || author.includes(q) || themes.some(t=>t.includes(q));
+    const matchTopic = !activeTopic || themes.includes(activeTopic.toLowerCase());
+    return matchSearch && matchTopic;
+  });
+}
+
+function inSet(id) { return serviceSet.some(s=>s.id===id); }
+
+// ── API calls ─────────────────────────────────────────────────
+async function fetchAllSongs() {
+  const base = `${CONFIG.supabaseUrl}/functions/v1/planning-center`;
+  const headers = { "apikey": CONFIG.supabaseAnonKey, "Authorization": `Bearer ${CONFIG.supabaseAnonKey}` };
+  let all = [];
+  let path = "/services/v2/songs?per_page=100";
+  while (path) {
+    const res = await fetch(`${base}?path=${encodeURIComponent(path)}`, { headers });
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j?.error || j?.errors?.[0]?.detail || `HTTP ${res.status}`);
+    }
+    const json = await res.json();
+    all = all.concat(json.data || []);
+    const next = json.links?.next;
+    if (next) {
+      // extract path+query from full URL
+      try { path = new URL(next).pathname + new URL(next).search; }
+      catch { path = null; }
+    } else { path = null; }
+  }
+  return all;
+}
+
+async function askClaude(topic) {
+  const songList = songs.map(s =>
+    `- "${s.attributes?.title}"${s.attributes?.author?" by "+s.attributes.author:""}${extractThemes(s).length?" [themes: "+extractThemes(s).join(", ")+"]":""}`
+  ).join("\n");
+
+  const prompt = `You are a worship pastor helping plan a church service.
+Here is the complete song library available:\n\n${songList}\n\nThe sermon topic / service theme is: "${topic}"\n\nPlease suggest 5–7 songs from the library above that would work well for this service. For each song, give a one-sentence reason why it fits. Only recommend songs from the list above.`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role:"user", content: prompt }] })
+  });
+  const data = await res.json();
+  return data.content?.map(b=>b.text||"").join("") || "No suggestions returned.";
+}
+
+// ── Render ────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById("app");
+  if (appState === "setup") { app.innerHTML = renderSetup(); return; }
+  if (appState === "loading") { app.innerHTML = renderLoading(); return; }
+  app.innerHTML = renderMain();
+  bindEvents();
+}
+
+function renderSetup() {
+  const hasConfig = CONFIG.supabaseUrl && CONFIG.supabaseAnonKey;
+  return `
+  <div class="header">
+    <svg width="32" height="40" viewBox="0 0 32 40" fill="none"><path d="M16 38C23.732 38 30 31.732 30 24C30 16 22 10 18 4C18 4 17 12 12 14C10 10 11 6 11 6C6 10 2 16.5 2 24C2 31.732 8.268 38 16 38Z" fill="#c9973a" stroke="#c9973a" stroke-width="2"/><path d="M16 32C19.866 32 23 28.866 23 25C23 21.5 20 18 18.5 16C18.5 16 18 20 15 21C14 19 15 17 15 17C12.5 19 10 22 10 25C10 28.866 12.134 32 16 32Z" fill="#1a2744" stroke="#1a2744" stroke-width="1.5"/></svg>
+    <div><h1>Service Planner</h1><p>Powered by Planning Center + AI</p></div>
+  </div>
+  ${!hasConfig ? `
+  <div class="setup-card">
+    <h2>Setup Required</h2>
+    <p>The app needs to be configured with your Supabase project URL and anon key. Follow the steps below, then refresh this page.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p>In your Supabase project, go to <strong>Edge Functions</strong> and deploy the <code>planning-center</code> function from this repo.</p></div>
+      <div class="step"><div class="step-num">2</div><p>Go to <strong>Project Settings → Edge Functions</strong> and add two secrets:<br><code>PCO_APP_ID</code> and <code>PCO_SECRET</code> from your Planning Center Personal Access Token.</p></div>
+      <div class="step"><div class="step-num">3</div><p>Edit <code>docs/config.js</code> in your repo with your Supabase <strong>Project URL</strong> and <strong>anon key</strong> (found in Project Settings → API).</p></div>
+      <div class="step"><div class="step-num">4</div><p>Commit and push. GitHub Pages will update automatically.</p></div>
+    </div>
+    <p style="margin-top:16px;font-size:.8rem;color:var(--text-muted)">See <strong>README.md</strong> in the repo for detailed instructions.</p>
+  </div>
+  ` : `
+  <div class="setup-card">
+    <h2>Ready to Load</h2>
+    <p>Supabase is configured. Click below to load your Planning Center song library.</p>
+    <button class="btn btn-primary" onclick="loadLibrary()">Load My Library</button>
+    <div id="setup-error"></div>
+  </div>
+  `}`;
+}
+
+function renderLoading() {
+  return `
+  <div class="header">
+    <svg width="32" height="40" viewBox="0 0 32 40" fill="none"><path d="M16 38C23.732 38 30 31.732 30 24C30 16 22 10 18 4C18 4 17 12 12 14C10 10 11 6 11 6C6 10 2 16.5 2 24C2 31.732 8.268 38 16 38Z" fill="#c9973a" stroke="#c9973a" stroke-width="2"/></svg>
+    <div><h1>Service Planner</h1></div>
+  </div>
+  <div class="loading-screen">
+    <div class="spinner spinner-dark big-spinner"></div>
+    <h2>Loading your library…</h2>
+    <p>Fetching songs from Planning Center</p>
+  </div>`;
+}
+
+function renderMain() {
+  const topics = allTopics();
+  const list = filteredSongs();
+  return `
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg width="26" height="32" viewBox="0 0 32 40" fill="none"><path d="M16 38C23.732 38 30 31.732 30 24C30 16 22 10 18 4C18 4 17 12 12 14C10 10 11 6 11 6C6 10 2 16.5 2 24C2 31.732 8.268 38 16 38Z" fill="#c9973a" stroke="#c9973a" stroke-width="2"/><path d="M16 32C19.866 32 23 28.866 23 25C23 21.5 20 18 18.5 16C18.5 16 18 20 15 21C14 19 15 17 15 17C12.5 19 10 22 10 25C10 28.866 12.134 32 16 32Z" fill="#1a2744"/></svg>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--navy)">Service Planner</h1>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="reload()">↺ Reload Library</button>
+  </div>
+  <div class="layout">
+    <div>
+      <!-- AI Box -->
+      <div class="ai-box">
+        <div class="ai-box-head"><h2>✦ AI Song Suggestions</h2></div>
+        <div class="ai-box-body">
+          <div class="ai-row">
+            <input id="ai-input" placeholder="Enter sermon topic or theme…" onkeydown="if(event.key==='Enter')runAI()" />
+            <button class="btn btn-gold" onclick="runAI()" ${aiLoading?"disabled":""}>
+              ${aiLoading?'<span class="spinner"></span>':'Suggest'}
+            </button>
+          </div>
+          ${aiLoading?'<div class="ai-loading"><span class="spinner spinner-dark"></span> Finding songs from your library…</div>':""}
+          ${aiResult?`<div class="ai-result">${escHtml(aiResult)}</div>`:""}
+        </div>
+      </div>
+
+      <!-- Library -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Song Library</h2>
+          <span style="font-size:.8rem;color:var(--text-muted)">${songs.length} songs</span>
+        </div>
+        <div class="panel-body">
+          <div class="search-row">
+            <input id="search-input" value="${escHtml(searchVal)}" placeholder="Search title, author, theme…" oninput="onSearch(this.value)" />
+            ${searchVal?`<button class="btn btn-ghost btn-sm" onclick="clearSearch()">Clear</button>`:""}
+          </div>
+          ${topics.length?`<div class="chips">${topics.map(t=>`<span class="chip ${activeTopic===t?"on":""}" onclick="toggleTopic('${escHtml(t)}')">${escHtml(t)}</span>`).join("")}</div>`:""}
+          <div class="song-list">
+            ${list.length===0?`<div class="empty">No songs match.</div>`:list.map(s=>{
+              const themes = extractThemes(s);
+              const added = inSet(s.id);
+              return `<div class="song-item ${added?"in-set":""}" onclick="toggleSong('${s.id}')">
+                <div class="song-info">
+                  <div class="song-title">${escHtml(s.attributes?.title||"Untitled")}</div>
+                  <div class="song-meta">${escHtml(s.attributes?.author||"")}</div>
+                  ${themes.length?`<div class="song-themes">${themes.slice(0,3).map(t=>`<span class="theme-tag">${escHtml(t)}</span>`).join("")}</div>`:""}
+                </div>
+                <button class="add-btn">${added?"✓":"+"}</button>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set Builder -->
+    <div class="panel" style="position:sticky;top:20px;">
+      <div class="set-head">
+        <h2>Service Set</h2>
+        <input class="set-title-input" value="${escHtml(setTitle)}" oninput="setTitle=this.value" placeholder="Service title…" />
+      </div>
+      <div class="set-body">
+        ${serviceSet.length===0?`<div class="set-empty-msg">Click any song to add it to your set.</div>`:`
+          ${serviceSet.map((s,i)=>`
+            <div class="set-slot">
+              <span class="slot-num">${i+1}</span>
+              <div class="slot-info">
+                <div class="slot-title">${escHtml(s.attributes?.title||"")}</div>
+                ${s.attributes?.author?`<div class="slot-author">${escHtml(s.attributes.author)}</div>`:""}
+              </div>
+              <button class="slot-rm" onclick="removeFromSet('${s.id}')" title="Remove">✕</button>
+            </div>`).join("")}
+          <div class="set-actions">
+            <button class="btn btn-primary btn-sm" onclick="copySet()">Copy Set</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearSet()">Clear</button>
+          </div>
+          ${copied?`<div class="toast">✓ Copied to clipboard!</div>`:""}
+        `}
+      </div>
+    </div>
+  </div>`;
+}
+
+function escHtml(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── Actions ───────────────────────────────────────────────────
+function bindEvents() {}
+
+async function loadLibrary() {
+  appState = "loading"; render();
+  try {
+    songs = await fetchAllSongs();
+    appState = "ready"; render();
+  } catch(e) {
+    appState = "setup";
+    render();
+    const el = document.getElementById("setup-error");
+    if (el) el.innerHTML = `<div class="error-msg">${escHtml(e.message)}</div>`;
+  }
+}
+
+function reload() { loadLibrary(); }
+
+function onSearch(v) { searchVal = v; render(); }
+function clearSearch() { searchVal = ""; render(); }
+function toggleTopic(t) { activeTopic = activeTopic===t?null:t; render(); }
+
+function toggleSong(id) {
+  const song = songs.find(s=>s.id===id);
+  if (!song) return;
+  if (inSet(id)) { serviceSet = serviceSet.filter(s=>s.id!==id); }
+  else { serviceSet = [...serviceSet, song]; }
+  render();
+}
+function removeFromSet(id) { serviceSet = serviceSet.filter(s=>s.id!==id); render(); }
+function clearSet() { serviceSet = []; render(); }
+
+function copySet() {
+  const lines = [setTitle+"\n", ...serviceSet.map((s,i)=>`${i+1}. ${s.attributes?.title}${s.attributes?.author?" — "+s.attributes.author:""}`)];
+  navigator.clipboard.writeText(lines.join("\n")).then(()=>{ copied=true; render(); setTimeout(()=>{ copied=false; render(); },2500); });
+}
+
+async function runAI() {
+  const input = document.getElementById("ai-input");
+  const topic = input?.value?.trim();
+  if (!topic || aiLoading) return;
+  aiLoading = true; aiResult = ""; render();
+  try { aiResult = await askClaude(topic); }
+  catch(e) { aiResult = "Error: "+e.message; }
+  aiLoading = false; render();
+  // restore input value
+  const el = document.getElementById("ai-input");
+  if (el) el.value = topic;
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+if (CONFIG.supabaseUrl && CONFIG.supabaseAnonKey) {
+  appState = "setup"; // show "ready to load" button
+} else {
+  appState = "setup"; // show setup instructions
+}
+render();
+</script>
+</body>
+</html>
